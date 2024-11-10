@@ -52,9 +52,29 @@ var userModel = {
     pool.query(SQLSTATMENT, VALUES, callback);
   },
   loginUser: (data, callback) => {
-    const SQLSTATMENT = `select * from user where email=? and password=?`;
+    const SQLSTATMENT = `
+    SELECT * FROM user
+    WHERE email = ?
+    `;
+    const VALUES = [data.email];
 
-    const VALUES = [data.email, data.password];
+    pool.query(SQLSTATMENT, VALUES, callback);
+  },
+  checkUsernameOrEmailExist: (data, callback) => {
+    const SQLSTATMENT = `
+    SELECT * FROM user
+    WHERE username = ? OR email = ?;
+    `;
+    const VALUES = [data.username, data.email];
+
+    pool.query(SQLSTATMENT, VALUES, callback);
+  },
+  registerUser: (data, callback) => {
+    const SQLSTATMENT = `
+    INSERT INTO user (username, email, role, password)
+    VALUES (?,?,?,?);
+    `;
+    const VALUES = [data.username, data.email, data.role, data.password];
 
     pool.query(SQLSTATMENT, VALUES, callback);
   },

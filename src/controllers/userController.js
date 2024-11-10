@@ -1,3 +1,4 @@
+const { hash } = require("bcrypt");
 const model = require("../models/userModel");
 
 var userController = {
@@ -18,8 +19,6 @@ var userController = {
     const data = {
       userid: req.params.userid,
     };
-
-    console.log(data);
 
     const callback = (error, results, fields) => {
       if (error) {
@@ -45,6 +44,7 @@ var userController = {
       email: req.body.email,
       role: req.body.role,
       password: req.body.password,
+      hash: res.locals.hash,
     };
 
     const callback = (error, results, fields) => {
@@ -124,24 +124,73 @@ var userController = {
         res.status(500).json(error);
       } else {
         if (results.length == 0) {
-          //no match
-
           res.status(404).json({
             message: "email/password wrong",
           });
         } else {
-          //match email and password
+          const { userid, username, role, password } = results[0];
 
-          res.locals.userid = results[0].userid; //saves userid from database in res.locals for use in jwt payload
-
-          res.locals.role = results[0].role; //saves role from database in res.locals for use in jwt payload
-
-          next(); //call next middleware to issue token
+          res.locals.userid = userid;
+          res.locals.username = username;
+          res.locals.email = data.email;
+          res.locals.role = role;
+          res.locals.password = data.password;
+          res.locals.hash = password;
+          next();
         }
       }
     };
 
     model.loginUser(data, callback);
+  },
+  checkUsernameOrEmailExist: (req, res, next) => {
+    const data = {
+      username: req.body.username,
+      email: req.body.email,
+    };
+
+    const callback = (error, results, fields) => {
+      if (error) {
+        console.error("Error checking username or email:", error);
+        res.status(500).json({
+          message:
+            "An error occurred while checking the username or email. Please try again later.",
+        });
+      } else {
+        if (results.length > 0) {
+          res.status(409).json({
+            message: "Username or email already exists",
+          });
+        } else next();
+      }
+    };
+
+    model.checkUsernameOrEmailExist(data, callback);
+  },
+  registerUser: (req, res, next) => {
+    const data = {
+      username: req.body.username,
+      email: req.body.email,
+      role: req.body.role,
+      password: res.locals.hash,
+    };
+
+    const callback = (error, results, fields) => {
+      if (error) {
+        console.error("Error registering user:", error);
+        res.status(500).json({
+          message:
+            "An error occurred while registering the user. Please try again later.",
+        });
+      } else {
+        res.locals.userid = results.insertId;
+        res.locals.role = data.role;
+
+        next();
+      }
+    };
+
+    model.registerUser(data, callback);
   },
 };
 

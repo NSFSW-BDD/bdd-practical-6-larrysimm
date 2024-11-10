@@ -4,7 +4,6 @@ const saltRounds = 10;
 
 var bcryptMiddleware = {
   comparePassword: (req, res, next) => {
-    // Check password
     const callback = (err, isMatch) => {
       if (err) {
         console.error("Error bcrypt:", err);
