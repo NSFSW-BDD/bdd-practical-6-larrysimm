@@ -32,9 +32,18 @@ var jwtMiddleware = {
     const token = jwt.sign(payload, secretKey, options, callback);
   },
   sendToken: (req, res, next) => {
-    res.status(200).json({
-      message: res.locals.message,
-      token: res.locals.token,
+    const token = res.locals.token;
+
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "Strict",
+      maxAge: 3600000,
+    });
+
+    return res.status(200).json({
+      message: res.locals.message || "Token successfully sent",
+      token: token,
     });
   },
   verifyToken: (req, res, next) => {
